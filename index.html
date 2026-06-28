@@ -1,0 +1,1719 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>糖果连连看 - 广告试玩版</title>
+  <style>
+    :root{
+      --bg0:#070514;
+      --bg1:#190b36;
+      --bg2:#062c4d;
+      --text:#fff;
+      --muted:rgba(255,255,255,.66);
+      --cyan:#82f7ff;
+      --pink:#ff55d7;
+      --gold:#ffe867;
+      --green:#76ffb1;
+      --red:#ff5577;
+      --page-pad:clamp(8px, 3vw, 12px);
+    }
+
+    *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+    html,body{
+      width:100%;
+      max-width:100%;
+      min-height:100%;
+      margin:0;
+      overflow:hidden;
+      overflow-x:hidden;
+      touch-action:manipulation;
+      overscroll-behavior:none;
+      user-select:none;
+      font-family:Inter, ui-rounded, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(circle at 15% 8%, rgba(255,85,215,.34), transparent 28%),
+        radial-gradient(circle at 86% 10%, rgba(130,247,255,.30), transparent 30%),
+        linear-gradient(145deg, var(--bg0), var(--bg1) 52%, var(--bg2));
+    }
+
+    #fx{
+      position:fixed;
+      inset:0;
+      width:100vw;
+      height:100vh;
+      max-width:100vw;
+      pointer-events:none;
+      z-index:30;
+    }
+
+    #app{
+      position:relative;
+      z-index:2;
+      min-height:100svh;
+      width:100%;
+      max-width:100vw;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:9px;
+      padding:max(10px, env(safe-area-inset-top)) var(--page-pad) max(12px, env(safe-area-inset-bottom));
+    }
+
+    .top{
+      width:min(100%,620px);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      min-width:0;
+    }
+
+    .brand{ line-height:1; min-width:0; flex:1; }
+
+    .top-actions{
+      display:flex;
+      align-items:center;
+      gap:7px;
+      min-width:0;
+      flex-shrink:0;
+    }
+    .brand b{
+      display:block;
+      font-size:clamp(24px,7vw,40px);
+      letter-spacing:-1.3px;
+      text-transform:uppercase;
+      text-shadow:0 4px 16px rgba(0,0,0,.32);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .brand span{
+      display:block;
+      margin-top:4px;
+      color:var(--muted);
+      font-size:11px;
+      font-weight:800;
+      letter-spacing:1.4px;
+      text-transform:uppercase;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .pill,.stat,.btn,.modal,.board-wrap{
+      border:1px solid rgba(255,255,255,.16);
+      background:rgba(255,255,255,.105);
+      box-shadow:0 12px 26px rgba(0,0,0,.24), inset 0 1px 0 rgba(255,255,255,.18);
+    }
+
+    .pill{
+      border-radius:999px;
+      padding:9px 12px;
+      font-size:13px;
+      font-weight:950;
+      white-space:nowrap;
+    }
+
+    .cta-pill{
+      border:0;
+      color:#080516;
+      background:linear-gradient(90deg, var(--gold), var(--green), var(--cyan));
+      box-shadow:0 8px 18px rgba(0,0,0,.24), 0 0 20px rgba(255,232,103,.22);
+      cursor:pointer;
+      animation:ctaPulse 1.35s ease-in-out infinite;
+    }
+
+    @keyframes ctaPulse{
+      0%,100%{ transform:scale(1); filter:brightness(1); }
+      50%{ transform:scale(1.045); filter:brightness(1.12); }
+    }
+
+    .stats{
+      width:min(100%,620px);
+      display:grid;
+      grid-template-columns:repeat(4,minmax(0,1fr));
+      gap:7px;
+      min-width:0;
+    }
+
+    .stat{
+      min-height:53px;
+      padding:8px 7px;
+      border-radius:16px;
+      overflow:hidden;
+      min-width:0;
+    }
+
+    .stat label{
+      display:block;
+      color:var(--muted);
+      font-size:9px;
+      font-weight:900;
+      letter-spacing:1px;
+      text-transform:uppercase;
+    }
+
+    .stat strong{
+      display:block;
+      margin-top:4px;
+      font-size:clamp(16px,4.8vw,25px);
+      line-height:1;
+      letter-spacing:-.5px;
+      font-variant-numeric:tabular-nums;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .bars{
+      width:min(100%,620px);
+      display:grid;
+      gap:6px;
+    }
+
+    .bar-shell{
+      height:13px;
+      width:100%;
+      border-radius:99px;
+      overflow:hidden;
+      background:rgba(0,0,0,.32);
+      border:1px solid rgba(255,255,255,.12);
+    }
+
+    .bar-fill{
+      height:100%;
+      width:100%;
+      border-radius:99px;
+      background:linear-gradient(90deg, var(--green), var(--cyan), var(--pink));
+      transition:width .16s linear;
+    }
+
+    #juiceFill{ background:linear-gradient(90deg, var(--green), var(--gold), var(--pink)); }
+
+    .board-wrap{
+      position:relative;
+      width:min(100%,560px);
+      max-width:min(100%, calc(100svh - 223px));
+      min-width:0;
+      aspect-ratio:1/1;
+      margin-top:2px;
+      padding:8px;
+      border-radius:26px;
+      background:rgba(255,255,255,.105);
+      overflow:hidden;
+    }
+
+    .board{
+      width:100%;
+      height:100%;
+      display:grid;
+      grid-template-columns:repeat(8, minmax(0, 1fr));
+      grid-template-rows:repeat(8, minmax(0, 1fr));
+      gap:5px;
+    }
+
+    .tile{
+      position:relative;
+      border:0;
+      border-radius:15px;
+      min-width:0;
+      min-height:0;
+      padding:0;
+      overflow:hidden;
+      display:grid;
+      place-items:center;
+      cursor:pointer;
+      font-size:clamp(21px,7vw,40px);
+      line-height:1;
+      color:white;
+      background:linear-gradient(145deg, rgba(255,255,255,.24), rgba(255,255,255,.075));
+      box-shadow:0 6px 0 rgba(0,0,0,.18), 0 10px 16px rgba(0,0,0,.18), inset 0 1px 0 rgba(255,255,255,.28);
+      transform:translateZ(0);
+      will-change:transform, opacity;
+      transition:transform .09s ease, filter .09s ease, opacity .12s ease;
+    }
+
+    .tile:active{ transform:translateY(3px) scale(.96); }
+
+    .tile.selected{
+      transform:translateY(-3px) scale(1.035);
+      filter:brightness(1.22) saturate(1.18);
+      box-shadow:0 0 0 3px rgba(255,255,255,.82), 0 0 18px rgba(130,247,255,.72), 0 11px 16px rgba(0,0,0,.24);
+      z-index:4;
+    }
+
+    .tile.empty{
+      pointer-events:none;
+      opacity:.10;
+      transform:scale(.86);
+      background:rgba(255,255,255,.04);
+      box-shadow:inset 0 2px 8px rgba(0,0,0,.23);
+    }
+
+    .tile.good{ animation:goodPop .20s ease-out forwards; }
+    @keyframes goodPop{
+      0%{ transform:scale(1.05); opacity:1; }
+      55%{ transform:scale(1.18); opacity:1; filter:brightness(1.45); }
+      100%{ transform:scale(.18); opacity:0; }
+    }
+
+    .tile.bad{ animation:badWiggle .18s ease-in-out; box-shadow:0 0 0 3px rgba(255,85,119,.75), 0 8px 14px rgba(0,0,0,.22); }
+    @keyframes badWiggle{
+      0%,100%{ transform:translateX(0); }
+      30%{ transform:translateX(-5px); }
+      70%{ transform:translateX(5px); }
+    }
+
+    .tile.hint{ animation:hintPulse .55s ease-in-out 2; }
+    @keyframes hintPulse{
+      0%,100%{ transform:scale(1); }
+      50%{ transform:scale(1.10) translateY(-3px); box-shadow:0 0 0 3px rgba(255,232,103,.78), 0 0 18px rgba(255,232,103,.7); }
+    }
+
+    .controls{
+      width:min(100%,620px);
+      display:grid;
+      grid-template-columns:repeat(4,minmax(0,1fr));
+      gap:7px;
+      min-width:0;
+    }
+
+    .btn{
+      min-height:46px;
+      border-radius:17px;
+      color:white;
+      font-weight:950;
+      font-size:14px;
+      cursor:pointer;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .btn:active{ transform:translateY(4px) scale(.98); }
+
+    .btn:disabled{
+      opacity:.45;
+      cursor:not-allowed;
+      filter:grayscale(.3);
+    }
+
+    .reward-ready{
+      color:#080516;
+      background:linear-gradient(90deg, var(--gold), var(--green));
+      box-shadow:0 8px 18px rgba(0,0,0,.24), 0 0 18px rgba(255,232,103,.2);
+    }
+
+    .ad-banner{
+      width:min(100%,620px);
+      min-height:42px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      border:1px solid rgba(255,255,255,.16);
+      border-radius:16px;
+      padding:7px 10px;
+      color:white;
+      background:linear-gradient(90deg, rgba(255,232,103,.20), rgba(130,247,255,.16), rgba(255,85,215,.18));
+      box-shadow:0 9px 22px rgba(0,0,0,.22), inset 0 1px 0 rgba(255,255,255,.18);
+      cursor:pointer;
+      overflow:hidden;
+      white-space:nowrap;
+    }
+
+    .ad-banner b{
+      min-width:0;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      font-size:13px;
+    }
+
+    .ad-banner span:last-child{
+      color:var(--gold);
+      font-size:12px;
+      font-weight:950;
+      flex-shrink:0;
+    }
+
+    .ad-tag,.ad-mini-tag{
+      flex-shrink:0;
+      border:1px solid rgba(255,255,255,.22);
+      border-radius:999px;
+      padding:3px 6px;
+      color:#080516;
+      background:var(--gold);
+      font-size:10px;
+      font-weight:1000;
+      letter-spacing:.6px;
+    }
+
+    .smallprint{
+      width:min(100%,620px);
+      margin:0;
+      text-align:center;
+      color:rgba(255,255,255,.58);
+      font-size:12px;
+      font-weight:650;
+    }
+
+    .overlay{
+      position:fixed;
+      inset:0;
+      z-index:100;
+      display:grid;
+      place-items:center;
+      padding:24px;
+      background:rgba(5,3,16,.78);
+      transition:opacity .16s ease, transform .16s ease;
+    }
+
+    .overlay.hidden{ opacity:0; pointer-events:none; transform:none; }
+
+    .modal{
+      width:min(92vw,420px);
+      padding:23px;
+      border-radius:30px;
+      text-align:center;
+      background:rgba(255,255,255,.13);
+    }
+
+    .modal h1{
+      margin:0;
+      font-size:clamp(36px,11vw,58px);
+      letter-spacing:-2px;
+      line-height:.9;
+      text-transform:uppercase;
+      text-shadow:0 4px 0 rgba(0,0,0,.18);
+    }
+
+    .modal p{
+      margin:14px 0 20px;
+      color:rgba(255,255,255,.75);
+      line-height:1.35;
+      font-weight:750;
+    }
+
+    .start{
+      width:100%;
+      min-height:62px;
+      border:0;
+      border-radius:22px;
+      background:linear-gradient(90deg, var(--green), var(--cyan), var(--pink));
+      color:#080516;
+      font-size:18px;
+      font-weight:1000;
+      cursor:pointer;
+      box-shadow:0 9px 0 rgba(0,0,0,.23);
+      text-transform:uppercase;
+    }
+
+    .start:active{ transform:translateY(6px); box-shadow:0 3px 0 rgba(0,0,0,.25); }
+
+    .install-btn{
+      width:100%;
+      min-height:48px;
+      margin-top:10px;
+      border:1px solid rgba(255,255,255,.18);
+      border-radius:18px;
+      color:white;
+      background:rgba(255,255,255,.10);
+      font-size:14px;
+      font-weight:950;
+      cursor:pointer;
+    }
+
+    .install-btn:active{ transform:translateY(3px) scale(.99); }
+
+    .ad-overlay{
+      position:fixed;
+      inset:0;
+      z-index:99;
+      display:grid;
+      place-items:center;
+      padding:22px;
+      background:rgba(5,3,16,.80);
+      backdrop-filter:blur(10px);
+      transition:opacity .16s ease;
+    }
+
+    .ad-overlay.hidden{
+      opacity:0;
+      pointer-events:none;
+    }
+
+    .ad-card{
+      width:min(90vw,360px);
+      text-align:center;
+      padding:22px;
+      border:1px solid rgba(255,255,255,.18);
+      border-radius:28px;
+      background:linear-gradient(150deg, rgba(255,255,255,.16), rgba(255,255,255,.08));
+      box-shadow:0 24px 70px rgba(0,0,0,.42), inset 0 1px 0 rgba(255,255,255,.18);
+    }
+
+    .ad-card h2{
+      margin:10px 0 8px;
+      font-size:32px;
+      line-height:1;
+      letter-spacing:-1px;
+    }
+
+    .ad-card p{
+      margin:0 0 14px;
+      color:rgba(255,255,255,.72);
+      font-weight:750;
+      line-height:1.35;
+    }
+
+    .ad-progress{
+      height:12px;
+      border-radius:99px;
+      overflow:hidden;
+      background:rgba(0,0,0,.32);
+      border:1px solid rgba(255,255,255,.12);
+    }
+
+    .ad-progress i{
+      display:block;
+      height:100%;
+      width:0%;
+      border-radius:99px;
+      background:linear-gradient(90deg, var(--gold), var(--green), var(--cyan));
+      transition:width .12s linear;
+    }
+
+    #adCountdown{
+      display:block;
+      margin:12px 0;
+      font-size:34px;
+      line-height:1;
+    }
+
+    .ad-close{
+      width:100%;
+      min-height:46px;
+      border:0;
+      border-radius:16px;
+      color:#080516;
+      background:linear-gradient(90deg, var(--green), var(--cyan));
+      font-size:15px;
+      font-weight:1000;
+      cursor:pointer;
+    }
+
+    .ad-close:disabled{ opacity:.45; cursor:not-allowed; }
+
+    .float{
+      position:fixed;
+      z-index:80;
+      left:0;
+      top:0;
+      pointer-events:none;
+      font-weight:1000;
+      text-shadow:0 3px 0 rgba(0,0,0,.25);
+      transform:translate(-50%,-50%);
+      white-space:nowrap;
+      max-width:88vw;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      text-align:center;
+      animation:floatUp .62s ease-out forwards;
+    }
+
+    @keyframes floatUp{
+      0%{ opacity:0; transform:translate(-50%,0) scale(.72); }
+      20%{ opacity:1; transform:translate(-50%,-16px) scale(1.06); }
+      100%{ opacity:0; transform:translate(-50%,-62px) scale(1.12); }
+    }
+
+    .toast{
+      position:fixed;
+      z-index:81;
+      left:50%;
+      bottom:calc(80px + env(safe-area-inset-bottom));
+      transform:translateX(-50%);
+      max-width:92vw;
+      padding:9px 13px;
+      border-radius:999px;
+      background:rgba(8,5,22,.78);
+      border:1px solid rgba(255,255,255,.18);
+      color:white;
+      font-size:13px;
+      font-weight:900;
+      white-space:normal;
+      text-align:center;
+      overflow-wrap:anywhere;
+      animation:toast .85s ease forwards;
+    }
+
+    @keyframes toast{
+      0%{ opacity:0; transform:translateX(-50%) translateY(12px) scale(.94); }
+      20%,78%{ opacity:1; transform:translateX(-50%) translateY(0) scale(1); }
+      100%{ opacity:0; transform:translateX(-50%) translateY(-8px) scale(.97); }
+    }
+
+    .shake{ animation:shake .18s ease-in-out; }
+    @keyframes shake{
+      0%,100%{ transform:translate3d(0,0,0); }
+      30%{ transform:translate3d(-5px,2px,0); }
+      65%{ transform:translate3d(5px,-2px,0); }
+    }
+
+    .flash{
+      position:fixed;
+      inset:0;
+      z-index:60;
+      background:white;
+      opacity:0;
+      pointer-events:none;
+    }
+    .flash.go{ animation:flash .16s ease-out; }
+    @keyframes flash{ 0%{opacity:.25;} 100%{opacity:0;} }
+
+    @media (max-width:420px), (max-height:690px){
+      #app{ gap:7px; padding-top:8px; padding-left:var(--page-pad); padding-right:var(--page-pad); }
+      .brand span,.smallprint{ display:none; }
+      .top{ gap:6px; }
+      .top-actions{ gap:5px; }
+      .pill{ padding:8px 9px; font-size:12px; }
+      .cta-pill{ max-width:92px; overflow:hidden; text-overflow:ellipsis; }
+      .stat{ min-height:45px; border-radius:14px; padding:7px 6px; }
+      .board-wrap{ padding:7px; border-radius:23px; width:min(100%, calc(100svh - 294px)); max-width:100%; min-width:0; }
+      .board{ gap:4px; }
+      .tile{ border-radius:13px; box-shadow:0 4px 0 rgba(0,0,0,.18), 0 7px 11px rgba(0,0,0,.16), inset 0 1px 0 rgba(255,255,255,.23); }
+      .controls{ grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px; }
+      .btn{ min-height:42px; font-size:13px; border-radius:14px; padding:0 6px; }
+      .ad-banner{ min-height:38px; padding:6px 8px; border-radius:14px; gap:6px; }
+      .ad-banner b{ font-size:12px; }
+      .ad-banner span:last-child{ font-size:11px; }
+    }
+
+
+    @media (max-height:430px){
+      #app{ gap:4px; padding-top:6px; padding-bottom:6px; }
+      .brand b{ font-size:20px; letter-spacing:-.5px; }
+      .top{ min-height:28px; }
+      .pill{ padding:6px 8px; font-size:11px; }
+      .stat{ min-height:34px; padding:5px 5px; }
+      .stat label{ font-size:8px; }
+      .stat strong{ font-size:15px; margin-top:2px; }
+      .bars{ gap:4px; }
+      .bar-shell{ height:10px; }
+      .board-wrap{ width:min(100%, calc(100svh - 190px)); padding:5px; border-radius:18px; }
+      .board{ gap:3px; }
+      .tile{ border-radius:10px; font-size:clamp(16px,5vw,26px); }
+      .controls{ grid-template-columns:repeat(4,minmax(0,1fr)); gap:4px; }
+      .btn{ min-height:31px; font-size:10px; border-radius:11px; padding:0 2px; }
+      .ad-banner{ min-height:30px; padding:4px 6px; }
+      .ad-banner b{ font-size:10px; }
+      .ad-banner span:last-child{ font-size:10px; }
+    }
+
+    @media (prefers-reduced-motion: reduce){
+      *,*::before,*::after{ animation-duration:.001ms!important; animation-iteration-count:1!important; transition-duration:.001ms!important; }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="fx"></canvas>
+
+  <main id="app">
+    <section class="top">
+      <div class="brand">
+        <b>糖果连连看</b>
+        <span>广告试玩版 · 苹果手机流畅</span>
+      </div>
+      <div class="top-actions"><div class="pill" id="highPill">最高 0</div><button class="pill cta-pill" id="topCtaBtn" type="button">完整版</button></div>
+    </section>
+
+    <section class="stats">
+      <div class="stat"><label>分数</label><strong id="score">0</strong></div>
+      <div class="stat"><label>连击</label><strong id="combo">0连</strong></div>
+      <div class="stat"><label>关卡</label><strong id="level">1</strong></div>
+      <div class="stat"><label>时间</label><strong id="time">45</strong></div>
+    </section>
+
+    <section class="bars">
+      <div class="bar-shell"><div class="bar-fill" id="timeFill"></div></div>
+      <div class="bar-shell"><div class="bar-fill" id="juiceFill"></div></div>
+    </section>
+
+    <section class="board-wrap" id="boardWrap">
+      <div class="board" id="board"></div>
+    </section>
+
+    <section class="controls">
+      <button class="btn" id="hintBtn">💡 提示</button>
+      <button class="btn reward-ready" id="shuffleBtn">🌀 免费洗牌</button>
+      <button class="btn reward-ready" id="rewardBtn">🎁 免费+20秒</button>
+      <button class="btn" id="muteBtn">🔊 声音开</button>
+    </section>
+
+    <button class="ad-banner" id="bannerCta" type="button" aria-label="赞助按钮">
+      <span class="ad-tag">广告</span>
+      <b>你能冲到第5关吗？</b>
+      <span>玩完整版 →</span>
+    </button>
+
+    <p class="smallprint">规则：免费加时一次、免费洗牌一次；之后想继续爽，就看奖励广告。很商业，很小妖怪。</p>
+  </main>
+
+  <div class="overlay" id="overlay">
+    <div class="modal">
+      <h1 id="modalTitle">糖果连连看</h1>
+      <p id="modalText">45秒开局。每次消除都会加时间。每局送一次免费+20秒和一次免费洗牌；之后想继续用，就看奖励广告。商业小妖怪批准上线。</p>
+      <button class="start" id="startBtn">点击开始</button>
+      <button class="install-btn" id="installBtn" type="button">玩完整版</button>
+    </div>
+  </div>
+
+  <div class="ad-overlay hidden" id="adOverlay" aria-hidden="true">
+    <div class="ad-card">
+      <div class="ad-mini-tag">广告</div>
+      <h2 id="adTitle">奖励广告</h2>
+      <p id="adText">这里是模拟奖励广告。正式接广告平台时，把这里接到激励视频。</p>
+      <div class="ad-progress"><i id="adProgress"></i></div>
+      <strong id="adCountdown">3</strong>
+      <button class="ad-close" id="adCloseBtn" type="button" disabled>继续</button>
+    </div>
+  </div>
+
+  <div class="flash" id="flash"></div>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const ROWS = 8;
+      const COLS = 8;
+      const START_TIME = 45;
+      const MAX_TIME_CAP = 90;
+      const TYPES = ["🍓","🍋","🍇","🍉","🍒","🥝","🍑","🍍","🍬","🍭","🧁","🍪","🍩","⭐","💎","🔥","🌈","⚡","👑","🐸"];
+      const isMobile = matchMedia("(max-width: 700px), (pointer: coarse)").matches;
+      const MAX_PARTICLES = isMobile ? 70 : 150;
+      const LINE_MS = isMobile ? 300 : 430;
+      const REWARD_SECONDS = 20;
+      const AD_SECONDS = 3;
+      const AD_CLICK_URL = "https://pxy3334.github.io/2/"; // Replace with App Store / landing-page URL when publishing.
+
+      const $ = id => document.getElementById(id);
+      const board = $("board");
+      const app = $("app");
+      const scoreEl = $("score");
+      const comboEl = $("combo");
+      const levelEl = $("level");
+      const timeEl = $("time");
+      const timeFill = $("timeFill");
+      const juiceFill = $("juiceFill");
+      const highPill = $("highPill");
+      const overlay = $("overlay");
+      const modalTitle = $("modalTitle");
+      const modalText = $("modalText");
+      const startBtn = $("startBtn");
+      const installBtn = $("installBtn");
+      const topCtaBtn = $("topCtaBtn");
+      const bannerCta = $("bannerCta");
+      const hintBtn = $("hintBtn");
+      const shuffleBtn = $("shuffleBtn");
+      const rewardBtn = $("rewardBtn");
+      const muteBtn = $("muteBtn");
+      const adOverlay = $("adOverlay");
+      const adTitle = $("adTitle");
+      const adText = $("adText");
+      const adCountdown = $("adCountdown");
+      const adProgress = $("adProgress");
+      const adCloseBtn = $("adCloseBtn");
+      const flash = $("flash");
+      const fx = $("fx");
+      const ctx = fx.getContext("2d", { alpha:true });
+
+      const state = {
+        cells: [],
+        selected: null,
+        score: 0,
+        combo: 0,
+        level: 1,
+        time: START_TIME,
+        maxTime: MAX_TIME_CAP,
+        juice: 0,
+        running: false,
+        busy: false,
+        muted: false,
+        high: safeGetHigh(),
+        lastMatch: 0,
+        timer: null,
+        adPlaying: false,
+        freeTimeUsed: false,
+        freeShuffleUsed: false,
+        adViews: 0
+      };
+
+      let buttons = [];
+      let particles = [];
+      let lines = [];
+      let fxRunning = false;
+      let lastFx = performance.now();
+      let audioCtx = null;
+      let master = null;
+      let compressor = null;
+      let audioUnlocked = false;
+      const SOUND_BOOST = isMobile ? 2.75 : 1.75;
+
+      function safeGetHigh(){
+        try { return Number(localStorage.getItem("linkpop_fixed_high") || 0); }
+        catch (_) { return 0; }
+      }
+
+      function safeSetHigh(value){
+        try { localStorage.setItem("linkpop_fixed_high", String(value)); }
+        catch (_) {}
+      }
+
+      function shuffle(arr){
+        for(let i=arr.length-1;i>0;i--){
+          const j = Math.floor(Math.random() * (i + 1));
+          [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+      }
+
+      function rcToIndex(r,c){ return r * COLS + c; }
+      function indexToRC(i){ return { r: Math.floor(i / COLS), c: i % COLS }; }
+
+      function createTiles(){
+        board.textContent = "";
+        buttons = [];
+        for(let i=0;i<ROWS*COLS;i++){
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "tile empty";
+          btn.dataset.index = String(i);
+          btn.addEventListener("pointerdown", e => {
+            e.preventDefault();
+            handleTile(i);
+          }, { passive:false });
+          board.appendChild(btn);
+          buttons.push(btn);
+        }
+      }
+
+      function syncTile(i){
+        const btn = buttons[i];
+        const value = state.cells[i];
+        btn.textContent = value || "";
+        btn.className = "tile" + (value ? "" : " empty") + (state.selected === i ? " selected" : "");
+      }
+
+      function syncAllTiles(){
+        for(let i=0;i<buttons.length;i++) syncTile(i);
+      }
+
+      function makeBoard(){
+        const total = ROWS * COLS;
+        const pairs = total / 2;
+        const values = [];
+        for(let i=0;i<pairs;i++){
+          const v = TYPES[(i + state.level) % TYPES.length];
+          values.push(v, v);
+        }
+        state.cells = shuffle(values);
+        let safety = 0;
+        while(!findAvailableMove() && safety < 80){
+          state.cells = shuffle(state.cells);
+          safety++;
+        }
+        state.selected = null;
+        syncAllTiles();
+      }
+
+      function updateHud(){
+        scoreEl.textContent = Math.floor(state.score).toLocaleString();
+        comboEl.textContent = state.combo + "连";
+        levelEl.textContent = state.level;
+        timeEl.textContent = Math.max(0, Math.ceil(state.time));
+        highPill.textContent = "最高 " + state.high.toLocaleString();
+        timeFill.style.width = Math.max(0, Math.min(100, (state.time / state.maxTime) * 100)) + "%";
+        juiceFill.style.width = Math.max(0, Math.min(100, state.juice)) + "%";
+        timeEl.style.color = state.time <= 5 ? "var(--red)" : "white";
+        if(rewardBtn){
+          rewardBtn.disabled = !state.running || state.adPlaying || state.busy;
+          rewardBtn.textContent = state.freeTimeUsed ? "🎁 看广告+20秒" : "🎁 免费+20秒";
+          rewardBtn.classList.toggle("reward-ready", !state.freeTimeUsed);
+        }
+        if(shuffleBtn){
+          shuffleBtn.disabled = !state.running || state.adPlaying || state.busy;
+          shuffleBtn.textContent = state.freeShuffleUsed ? "🌀 看广告洗牌" : "🌀 免费洗牌";
+          shuffleBtn.classList.toggle("reward-ready", !state.freeShuffleUsed);
+        }
+      }
+
+      function startGame(){
+        initAudio().then(() => sfx("start"));
+        state.score = 0;
+        state.combo = 0;
+        state.level = 1;
+        state.time = START_TIME;
+        state.maxTime = MAX_TIME_CAP;
+        state.juice = 0;
+        state.running = true;
+        state.busy = false;
+        state.adPlaying = false;
+        state.freeTimeUsed = false;
+        state.freeShuffleUsed = false;
+        state.adViews = 0;
+        overlay.classList.add("hidden");
+        adOverlay.classList.add("hidden");
+        makeBoard();
+        updateHud();
+        toast("开始！每次消除都会加时间！");
+
+        clearInterval(state.timer);
+        state.timer = setInterval(() => {
+          if(!state.running || state.adPlaying) return;
+          state.time -= 1;
+          if(state.time <= 5 && state.time > 0) sfx("tick");
+          if(state.time <= 0){
+            state.time = 0;
+            updateHud();
+            gameOver();
+          }else{
+            updateHud();
+          }
+        }, 1000);
+      }
+
+      function gameOver(){
+        state.running = false;
+        state.busy = false;
+        clearInterval(state.timer);
+        sfx("gameover");
+        shake();
+        flashScreen();
+
+        if(state.score > state.high){
+          state.high = Math.floor(state.score);
+          safeSetHigh(state.high);
+          modalTitle.textContent = "新纪录 💅";
+        }else{
+          modalTitle.textContent = "试玩结束";
+        }
+        modalText.textContent = `分数 ${Math.floor(state.score).toLocaleString()} · 第 ${state.level} 关。这里展示强CTA：再玩一次，或者跳到完整版。`;
+        startBtn.textContent = "再玩一次";
+        installBtn.textContent = "玩完整版";
+        setTimeout(() => overlay.classList.remove("hidden"), 260);
+      }
+
+      function handleTile(i){
+        if(!state.running || state.busy) return;
+        if(!state.cells[i]) return;
+        initAudio();
+
+        if(state.selected === null){
+          state.selected = i;
+          syncTile(i);
+          sfx("tap");
+          return;
+        }
+
+        if(state.selected === i){
+          const old = state.selected;
+          state.selected = null;
+          syncTile(old);
+          sfx("tap");
+          return;
+        }
+
+        const a = state.selected;
+        const b = i;
+        if(state.cells[a] === state.cells[b]){
+          const path = findPath(indexToRC(a), indexToRC(b));
+          if(path){
+            matchTiles(a,b,path);
+            return;
+          }
+        }
+        wrongTiles(a,b);
+      }
+
+      function matchTiles(a,b,path){
+        state.busy = true;
+        const now = performance.now();
+        state.combo = now - state.lastMatch < 1800 ? state.combo + 1 : 1;
+        state.lastMatch = now;
+
+        const gained = 100 + state.combo * 32 + state.level * 12;
+        const timeGain = 2 + Math.min(3, Math.floor(state.combo / 4));
+        state.score += gained;
+        state.time = Math.min(state.maxTime, state.time + timeGain);
+        state.juice = Math.min(100, state.juice + 8 + Math.min(14, state.combo * 2));
+        if(state.juice >= 100){
+          state.score += 350;
+          state.juice = 0;
+          toast("能量奖励 +350。苹果也挡不住。");
+          flashScreen();
+        }
+
+        state.selected = null;
+        syncTile(a);
+        syncTile(b);
+        mark(a,"good",230);
+        mark(b,"good",230);
+        showLine(path);
+
+        const ca = tileCenter(a);
+        const cb = tileCenter(b);
+        burst(ca.x, ca.y, isMobile ? 9 : 16);
+        burst(cb.x, cb.y, isMobile ? 9 : 16);
+        floatText("+" + gained, (ca.x + cb.x)/2, (ca.y + cb.y)/2, state.combo);
+        floatText("+" + timeGain + "秒", (ca.x + cb.x)/2, ((ca.y + cb.y)/2) - 24, state.combo + 1);
+        if(state.combo >= 3) floatText("x" + state.combo, cb.x, cb.y - 4, state.combo + 2);
+
+        sfx(state.combo >= 5 ? "combo2" : state.combo >= 3 ? "combo" : "match");
+        if(state.combo >= 5) shake();
+        updateHud();
+
+        setTimeout(() => {
+          state.cells[a] = null;
+          state.cells[b] = null;
+          syncTile(a);
+          syncTile(b);
+          state.busy = false;
+
+          if(state.cells.every(v => v === null)) levelClear();
+          else ensureMove();
+        }, 190);
+      }
+
+      function wrongTiles(a,b){
+        state.combo = 0;
+        state.juice = Math.max(0, state.juice - 7);
+        state.selected = null;
+        syncTile(a);
+        syncTile(b);
+        mark(a,"bad",210);
+        mark(b,"bad",210);
+        sfx("bad");
+        shake();
+        updateHud();
+      }
+
+      function levelClear(){
+        state.level += 1;
+        state.maxTime = MAX_TIME_CAP;
+        state.time = Math.min(state.maxTime, state.time + 10);
+        state.score += 500 + state.level * 80;
+        toast("通关！棋盘被你干碎了。");
+        sfx("clear");
+        confetti();
+        setTimeout(() => {
+          makeBoard();
+          updateHud();
+        }, 300);
+      }
+
+      function ensureMove(){
+        if(findAvailableMove()) return;
+        shuffleRemaining(false);
+        toast("无路可走，自动洗牌");
+      }
+
+      function shuffleRemaining(manual, reason = "normal"){
+        if(!state.running || state.busy) return;
+        const idx = [];
+        const vals = [];
+        state.cells.forEach((v,i) => {
+          if(v){ idx.push(i); vals.push(v); }
+        });
+        let tries = 0;
+        do{
+          shuffle(vals);
+          idx.forEach((cellIndex,n) => state.cells[cellIndex] = vals[n]);
+          tries++;
+        }while(!findAvailableMove() && tries < 140);
+        state.selected = null;
+        syncAllTiles();
+
+        if(manual){
+          state.combo = 0;
+          if(reason === "free"){
+            toast("免费洗牌已用。下次洗牌要看广告。");
+          }else if(reason === "ad"){
+            toast("广告洗牌到账。随机小妖怪收钱办事。");
+          }else{
+            state.juice = Math.max(0, state.juice - 10);
+            toast("已洗牌。随机小妖怪上班。");
+          }
+          sfx("shuffle");
+          updateHud();
+        }
+      }
+
+      function showHint(){
+        if(!state.running || state.busy) return;
+        const move = findAvailableMove();
+        if(!move){ ensureMove(); return; }
+        const old = state.selected;
+        state.selected = null;
+        if(old !== null) syncTile(old);
+        mark(move.a,"hint",1100);
+        mark(move.b,"hint",1100);
+        showLine(move.path, true);
+        state.combo = 0;
+        state.juice = Math.max(0, state.juice - 5);
+        sfx("hint");
+        toast("提示已使用。别慌，问题不大。");
+        updateHud();
+      }
+
+      function mark(i, cls, ms){
+        const btn = buttons[i];
+        if(!btn) return;
+        btn.classList.remove(cls);
+        void btn.offsetWidth;
+        btn.classList.add(cls);
+        setTimeout(() => btn.classList.remove(cls), ms);
+      }
+
+      function findPath(a,b){
+        const gridRows = ROWS + 2;
+        const gridCols = COLS + 2;
+        const start = { r:a.r + 1, c:a.c + 1 };
+        const target = { r:b.r + 1, c:b.c + 1 };
+        const dirs = [[-1,0],[0,1],[1,0],[0,-1]];
+        const visited = Array.from({length:gridRows}, () => Array.from({length:gridCols}, () => [99,99,99,99]));
+
+        function blocked(r,c){
+          if(r === start.r && c === start.c) return false;
+          if(r === target.r && c === target.c) return false;
+          const br = r - 1;
+          const bc = c - 1;
+          if(br < 0 || br >= ROWS || bc < 0 || bc >= COLS) return false;
+          return state.cells[rcToIndex(br,bc)] !== null;
+        }
+
+        const q = [{ r:start.r, c:start.c, dir:-1, turns:-1, path:[[start.r,start.c]] }];
+        let head = 0;
+        while(head < q.length){
+          const cur = q[head++];
+          for(let d=0;d<4;d++){
+            const nr = cur.r + dirs[d][0];
+            const nc = cur.c + dirs[d][1];
+            if(nr < 0 || nr >= gridRows || nc < 0 || nc >= gridCols) continue;
+            const turns = cur.dir === -1 ? 0 : (cur.dir === d ? cur.turns : cur.turns + 1);
+            if(turns > 2 || blocked(nr,nc) || visited[nr][nc][d] <= turns) continue;
+            visited[nr][nc][d] = turns;
+            const path = cur.path.concat([[nr,nc]]);
+            if(nr === target.r && nc === target.c) return simplifyPath(path);
+            q.push({ r:nr, c:nc, dir:d, turns, path });
+          }
+        }
+        return null;
+      }
+
+      function simplifyPath(path){
+        if(path.length <= 2) return path;
+        const out = [path[0]];
+        let prev = dir(path[0], path[1]);
+        for(let i=1;i<path.length-1;i++){
+          const next = dir(path[i], path[i+1]);
+          if(next !== prev){
+            out.push(path[i]);
+            prev = next;
+          }
+        }
+        out.push(path[path.length-1]);
+        return out;
+      }
+
+      function dir(a,b){ return a[0] === b[0] ? "h" : "v"; }
+
+      function findAvailableMove(){
+        for(let i=0;i<state.cells.length;i++){
+          if(!state.cells[i]) continue;
+          for(let j=i+1;j<state.cells.length;j++){
+            if(state.cells[i] !== state.cells[j]) continue;
+            const path = findPath(indexToRC(i), indexToRC(j));
+            if(path) return { a:i, b:j, path };
+          }
+        }
+        return null;
+      }
+
+      function resizeCanvas(){
+        const dpr = isMobile ? 1 : Math.min(2, window.devicePixelRatio || 1);
+        fx.width = Math.floor(window.innerWidth * dpr);
+        fx.height = Math.floor(window.innerHeight * dpr);
+        fx.style.width = window.innerWidth + "px";
+        fx.style.height = window.innerHeight + "px";
+        ctx.setTransform(dpr,0,0,dpr,0,0);
+      }
+
+      function tileCenter(i){
+        const r = buttons[i].getBoundingClientRect();
+        return { x:r.left + r.width/2, y:r.top + r.height/2 };
+      }
+
+      function pathPointToScreen(p){
+        const rect = board.getBoundingClientRect();
+        const cellW = rect.width / COLS;
+        const cellH = rect.height / ROWS;
+        return {
+          x: rect.left + (p[1] - 1 + .5) * cellW,
+          y: rect.top + (p[0] - 1 + .5) * cellH
+        };
+      }
+
+      function showLine(path, hint){
+        lines.push({
+          pts:path.map(pathPointToScreen),
+          born:performance.now(),
+          ms:hint ? 720 : LINE_MS,
+          hint:!!hint
+        });
+        kickFx();
+      }
+
+      function burst(x,y,count){
+        const colors = ["#82f7ff", "#ff55d7", "#ffe867", "#76ffb1", "#ffffff"];
+        for(let i=0;i<count;i++){
+          if(particles.length >= MAX_PARTICLES) particles.shift();
+          const a = Math.random() * Math.PI * 2;
+          const sp = isMobile ? 90 + Math.random()*130 : 120 + Math.random()*220;
+          particles.push({
+            x,y,
+            vx:Math.cos(a)*sp,
+            vy:Math.sin(a)*sp - 60,
+            life:.34 + Math.random()*.28,
+            age:0,
+            size:isMobile ? 3 + Math.random()*4 : 4 + Math.random()*6,
+            color:colors[(Math.random()*colors.length)|0]
+          });
+        }
+        kickFx();
+      }
+
+      function confetti(){
+        const rect = board.getBoundingClientRect();
+        const count = isMobile ? 42 : 90;
+        for(let i=0;i<count;i++){
+          burst(rect.left + Math.random()*rect.width, rect.top + Math.random()*rect.height, 1);
+        }
+        flashScreen();
+        kickFx();
+      }
+
+      function kickFx(){
+        if(fxRunning) return;
+        fxRunning = true;
+        lastFx = performance.now();
+        requestAnimationFrame(fxLoop);
+      }
+
+      function fxLoop(now){
+        const dt = Math.min(.033, (now - lastFx) / 1000);
+        lastFx = now;
+        ctx.clearRect(0,0,window.innerWidth,window.innerHeight);
+
+        lines = lines.filter(line => now - line.born < line.ms);
+        for(const line of lines){
+          const t = Math.min(1, (now - line.born) / line.ms);
+          const alpha = Math.sin(Math.PI * t);
+          ctx.save();
+          ctx.globalAlpha = alpha;
+          ctx.lineWidth = line.hint ? 5 : 7;
+          ctx.lineCap = "round";
+          ctx.lineJoin = "round";
+          ctx.strokeStyle = line.hint ? "#ffe867" : "#82f7ff";
+          ctx.shadowBlur = isMobile ? 6 : 14;
+          ctx.shadowColor = ctx.strokeStyle;
+          ctx.beginPath();
+          line.pts.forEach((p,i) => i ? ctx.lineTo(p.x,p.y) : ctx.moveTo(p.x,p.y));
+          ctx.stroke();
+          ctx.restore();
+        }
+
+        particles = particles.filter(p => p.age < p.life);
+        for(const p of particles){
+          p.age += dt;
+          p.vy += 360 * dt;
+          p.x += p.vx * dt;
+          p.y += p.vy * dt;
+          const alpha = Math.max(0, 1 - p.age / p.life);
+          ctx.globalAlpha = alpha;
+          ctx.fillStyle = p.color;
+          ctx.beginPath();
+          ctx.arc(p.x,p.y,p.size,0,Math.PI*2);
+          ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+
+        if(lines.length || particles.length){
+          requestAnimationFrame(fxLoop);
+        }else{
+          ctx.clearRect(0,0,window.innerWidth,window.innerHeight);
+          fxRunning = false;
+        }
+      }
+
+      function floatText(text,x,y,combo){
+        const el = document.createElement("div");
+        el.className = "float";
+        el.textContent = text;
+        const safeX = Math.max(42, Math.min(window.innerWidth - 42, x));
+        const safeY = Math.max(32, Math.min(window.innerHeight - 32, y));
+        el.style.left = safeX + "px";
+        el.style.top = safeY + "px";
+        el.style.fontSize = Math.min(30, 17 + combo*1.8) + "px";
+        el.style.color = combo >= 5 ? "var(--pink)" : combo >= 3 ? "var(--gold)" : "#fff";
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), 700);
+      }
+
+      function toast(msg){
+        const old = document.querySelector(".toast");
+        if(old) old.remove();
+        const el = document.createElement("div");
+        el.className = "toast";
+        el.textContent = msg;
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), 900);
+      }
+
+      function shake(){
+        app.classList.remove("shake");
+        void app.offsetWidth;
+        app.classList.add("shake");
+        setTimeout(() => app.classList.remove("shake"), 210);
+      }
+
+      function flashScreen(){
+        flash.classList.remove("go");
+        void flash.offsetWidth;
+        flash.classList.add("go");
+      }
+
+      function openStore(){
+        sfx("tap");
+        toast("已点击CTA。发布时把链接换成你的商店页。");
+        try{
+          if(window.mraid && typeof window.mraid.open === "function"){
+            window.mraid.open(AD_CLICK_URL);
+            return;
+          }
+        }catch(_){ }
+        try{ window.open(AD_CLICK_URL, "_blank", "noopener,noreferrer"); }
+        catch(_){ location.href = AD_CLICK_URL; }
+      }
+
+      function requestTimeBoost(){
+        if(!state.running || state.busy || state.adPlaying) return;
+        initAudio();
+
+        if(!state.freeTimeUsed){
+          state.freeTimeUsed = true;
+          grantTimeBoost("free");
+          toast("免费+20秒已用。下次加时要看广告。");
+          updateHud();
+          return;
+        }
+
+        playAdGate({
+          title:"+20秒奖励广告",
+          text:`观看 ${AD_SECONDS} 秒广告，获得 +${REWARD_SECONDS} 秒。第一次免费用完了，现在广告小妖怪要收租。`,
+          done:() => {
+            grantTimeBoost("ad");
+            toast(`广告奖励到账：+${REWARD_SECONDS}秒`);
+          }
+        });
+      }
+
+      function grantTimeBoost(source){
+        state.time = Math.min(state.maxTime, state.time + REWARD_SECONDS);
+        state.score += source === "free" ? 100 : 150;
+        updateHud();
+        floatText("+" + REWARD_SECONDS + "秒", window.innerWidth / 2, window.innerHeight * .42, 7);
+        sfx("reward");
+        flashScreen();
+      }
+
+      function requestShuffle(){
+        if(!state.running || state.busy || state.adPlaying) return;
+        initAudio();
+
+        if(!state.freeShuffleUsed){
+          state.freeShuffleUsed = true;
+          shuffleRemaining(true, "free");
+          updateHud();
+          return;
+        }
+
+        playAdGate({
+          title:"洗牌奖励广告",
+          text:`观看 ${AD_SECONDS} 秒广告，再获得一次洗牌。每局一次免费，额外次数属于赞助混沌。`,
+          done:() => shuffleRemaining(true, "ad")
+        });
+      }
+
+      function playAdGate({title, text, done}){
+        if(!state.running || state.adPlaying) return;
+        state.adPlaying = true;
+        state.busy = true;
+        state.adViews += 1;
+        updateHud();
+        adTitle.textContent = title;
+        adText.textContent = text;
+        runAdCountdown(() => {
+          state.adPlaying = false;
+          state.busy = false;
+          done();
+          updateHud();
+        });
+      }
+
+      function runAdCountdown(done){
+        adOverlay.classList.remove("hidden");
+        adOverlay.setAttribute("aria-hidden", "false");
+        adCloseBtn.disabled = true;
+        adCloseBtn.textContent = "继续";
+        let start = performance.now();
+        function frame(now){
+          const elapsed = Math.min(AD_SECONDS, (now - start) / 1000);
+          const remain = Math.max(0, Math.ceil(AD_SECONDS - elapsed));
+          adCountdown.textContent = String(remain || "✓");
+          adProgress.style.width = ((elapsed / AD_SECONDS) * 100) + "%";
+          if(elapsed < AD_SECONDS){
+            requestAnimationFrame(frame);
+          }else{
+            adCloseBtn.disabled = false;
+            adCloseBtn.textContent = "领取奖励";
+            const finish = () => {
+              adCloseBtn.removeEventListener("click", finish);
+              adOverlay.classList.add("hidden");
+              adOverlay.setAttribute("aria-hidden", "true");
+              adProgress.style.width = "0%";
+              done();
+            };
+            adCloseBtn.addEventListener("click", finish);
+          }
+        }
+        requestAnimationFrame(frame);
+      }
+
+      function initAudio(){
+        if(state.muted) return Promise.resolve(false);
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if(!AC) return Promise.resolve(false);
+
+        try{
+          if(!audioCtx){
+            audioCtx = new AC();
+            master = audioCtx.createGain();
+            master.gain.value = isMobile ? .34 : .24;
+
+            // Compressor keeps iPhone speaker sounds punchy without clipping.
+            compressor = audioCtx.createDynamicsCompressor();
+            compressor.threshold.value = -24;
+            compressor.knee.value = 26;
+            compressor.ratio.value = 8;
+            compressor.attack.value = .004;
+            compressor.release.value = .18;
+
+            master.connect(compressor);
+            compressor.connect(audioCtx.destination);
+          }
+
+          const unlock = () => {
+            if(audioUnlocked) return true;
+            try{
+              // iOS/Safari needs a sound source created during a user gesture.
+              // This silent blip unlocks the audio graph; real SFX play after it.
+              const osc = audioCtx.createOscillator();
+              const gain = audioCtx.createGain();
+              gain.gain.setValueAtTime(.00001, audioCtx.currentTime);
+              osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+              osc.connect(gain);
+              gain.connect(master);
+              osc.start(audioCtx.currentTime);
+              osc.stop(audioCtx.currentTime + .025);
+              audioUnlocked = true;
+            }catch(_){
+              audioUnlocked = true;
+            }
+            return true;
+          };
+
+          if(audioCtx.state === "suspended"){
+            return audioCtx.resume().then(unlock).catch(() => false);
+          }
+
+          unlock();
+          return Promise.resolve(true);
+        }catch(_){
+          return Promise.resolve(false);
+        }
+      }
+
+      // --- Rich mobile-safe WebAudio SFX engine ---
+      // Still pure WebAudio, no external files, but layered enough to stop sounding like a calculator with anxiety.
+      function safeNow(delay=0){
+        return audioCtx ? audioCtx.currentTime + delay : 0;
+      }
+
+      function envGain(g, t, gain, attack=.006, hold=.012, release=.11){
+        const finalGain = Math.min(.30, gain * SOUND_BOOST);
+        g.gain.cancelScheduledValues(t);
+        g.gain.setValueAtTime(.0001, t);
+        g.gain.exponentialRampToValueAtTime(finalGain, t + attack);
+        g.gain.setValueAtTime(finalGain, t + attack + hold);
+        g.gain.exponentialRampToValueAtTime(.0001, t + attack + hold + release);
+      }
+
+      function tone(opts){
+        if(state.muted || !audioCtx || !master || audioCtx.state !== "running") return;
+        try{
+          const {
+            freq=440,
+            endFreq=null,
+            dur=.12,
+            type="sine",
+            gain=.05,
+            delay=0,
+            attack=.006,
+            hold=.012,
+            release=null,
+            filter=null,
+            detune=0
+          } = opts || {};
+          const t = safeNow(delay);
+          const osc = audioCtx.createOscillator();
+          const g = audioCtx.createGain();
+          osc.type = type;
+          osc.detune.setValueAtTime(detune, t);
+          osc.frequency.setValueAtTime(Math.max(20, freq), t);
+          if(endFreq){
+            osc.frequency.exponentialRampToValueAtTime(Math.max(20, endFreq), t + Math.max(.025, dur));
+          }
+          envGain(g, t, gain, attack, hold, release == null ? Math.max(.035, dur - attack - hold) : release);
+          if(filter){
+            const f = audioCtx.createBiquadFilter();
+            f.type = filter.type || "lowpass";
+            f.frequency.setValueAtTime(filter.freq || 1200, t);
+            if(filter.endFreq) f.frequency.exponentialRampToValueAtTime(Math.max(30, filter.endFreq), t + dur);
+            f.Q.value = filter.q == null ? 1 : filter.q;
+            osc.connect(f);
+            f.connect(g);
+          }else{
+            osc.connect(g);
+          }
+          g.connect(master);
+          osc.start(t);
+          osc.stop(t + dur + .05);
+        }catch(_){ }
+      }
+
+      function noiseBurst(opts){
+        if(state.muted || !audioCtx || !master || audioCtx.state !== "running") return;
+        try{
+          const {dur=.08, gain=.035, delay=0, type="bandpass", freq=1200, endFreq=null, q=.8} = opts || {};
+          const t = safeNow(delay);
+          const length = Math.max(1, Math.floor(audioCtx.sampleRate * dur));
+          const buffer = audioCtx.createBuffer(1, length, audioCtx.sampleRate);
+          const data = buffer.getChannelData(0);
+          for(let i=0;i<length;i++){
+            const fade = 1 - i / length;
+            data[i] = (Math.random() * 2 - 1) * fade * fade;
+          }
+          const source = audioCtx.createBufferSource();
+          const filter = audioCtx.createBiquadFilter();
+          const g = audioCtx.createGain();
+          source.buffer = buffer;
+          filter.type = type;
+          filter.frequency.setValueAtTime(freq, t);
+          if(endFreq) filter.frequency.exponentialRampToValueAtTime(Math.max(40, endFreq), t + dur);
+          filter.Q.value = q;
+          envGain(g, t, gain, .003, .006, Math.max(.025, dur - .009));
+          source.connect(filter);
+          filter.connect(g);
+          g.connect(master);
+          source.start(t);
+          source.stop(t + dur + .03);
+        }catch(_){ }
+      }
+
+      function popLayer(delay=0, power=1){
+        tone({ freq:130, endFreq:64, dur:.075, type:"sine", gain:.040 * power, delay, attack:.002, hold:.008, release:.055 });
+        tone({ freq:820, endFreq:1280, dur:.060, type:"triangle", gain:.045 * power, delay:delay+.008, attack:.002, hold:.006, release:.045 });
+        noiseBurst({ dur:.045, gain:.020 * power, delay:delay+.004, type:"highpass", freq:1800, q:.6 });
+      }
+
+      function sparkle(startDelay=0, root=880, power=1){
+        const notes = [0, 4, 7, 12];
+        notes.forEach((semi,i) => {
+          const f = root * Math.pow(2, semi / 12);
+          tone({ freq:f, dur:.10 + i*.012, type:i % 2 ? "sine" : "triangle", gain:.024 * power, delay:startDelay + i*.035, attack:.004, hold:.012, release:.090 });
+        });
+        noiseBurst({ dur:.13, gain:.012 * power, delay:startDelay+.03, type:"bandpass", freq:3600, endFreq:5200, q:1.2 });
+      }
+
+      function risingRun(startDelay=0, root=440, steps=5, power=1){
+        for(let i=0;i<steps;i++){
+          const f = root * Math.pow(2, i * 2 / 12);
+          tone({ freq:f, endFreq:f*1.08, dur:.055, type:"triangle", gain:.032 * power, delay:startDelay + i*.032, attack:.003, hold:.005, release:.045 });
+        }
+      }
+
+      function descendingRun(startDelay=0, root=460, steps=4, power=1){
+        for(let i=0;i<steps;i++){
+          const f = root * Math.pow(2, -i * 3 / 12);
+          tone({ freq:f, endFreq:f*.76, dur:.105, type:"sawtooth", gain:.035 * power, delay:startDelay + i*.065, attack:.006, hold:.010, release:.085, filter:{type:"lowpass", freq:900, endFreq:380, q:.8} });
+        }
+      }
+
+      function chord(freqs, delay=0, dur=.16, gain=.035, type="triangle"){
+        freqs.forEach((f,i) => tone({ freq:f, dur, type, gain:gain * (i ? .82 : 1), delay, attack:.008, hold:.030, release:dur*.72, detune:(i-1)*3 }));
+      }
+
+      function playSfx(name){
+        switch(name){
+          case "tap":
+            // Soft glossy UI blip.
+            tone({freq:580, endFreq:720, dur:.045, type:"triangle", gain:.040, attack:.002, hold:.004, release:.035});
+            tone({freq:1180, dur:.035, type:"sine", gain:.018, delay:.012, attack:.001, hold:.004, release:.026});
+            break;
+
+          case "match":
+            // Bubble pop + happy two-note candy chime.
+            popLayer(0, 1);
+            tone({freq:760, endFreq:920, dur:.09, type:"triangle", gain:.050, delay:.030, attack:.003, hold:.010, release:.073});
+            tone({freq:1140, dur:.105, type:"sine", gain:.040, delay:.075, attack:.004, hold:.016, release:.085});
+            break;
+
+          case "combo":
+            // Match, but with an actual “oh keep going” arpeggio.
+            popLayer(0, 1.05);
+            risingRun(.035, 620, 4, 1.05);
+            sparkle(.105, 1120, .8);
+            break;
+
+          case "combo2":
+            // Bigger combo stinger: bass thump + arpeggio + glitter tail.
+            tone({freq:90, endFreq:46, dur:.115, type:"sine", gain:.060, attack:.002, hold:.010, release:.090});
+            popLayer(.012, 1.25);
+            risingRun(.045, 520, 6, 1.15);
+            chord([1040, 1310, 1560], .205, .18, .026, "sine");
+            sparkle(.190, 1480, 1.0);
+            break;
+
+          case "bad":
+            // Wrong answer: tiny cartoon fail wobble, not ear murder.
+            tone({freq:230, endFreq:120, dur:.16, type:"sawtooth", gain:.052, attack:.004, hold:.016, release:.130, filter:{type:"lowpass", freq:700, endFreq:260, q:1.1}});
+            tone({freq:180, endFreq:95, dur:.18, type:"square", gain:.028, delay:.055, attack:.004, hold:.012, release:.140, filter:{type:"lowpass", freq:520, endFreq:220, q:.9}});
+            noiseBurst({dur:.07, gain:.018, delay:.018, type:"bandpass", freq:500, q:1.4});
+            break;
+
+          case "shuffle":
+            // Swirly card-shuffle whoosh.
+            noiseBurst({dur:.24, gain:.050, type:"bandpass", freq:420, endFreq:4200, q:.85});
+            for(let i=0;i<8;i++){
+              tone({freq:300+i*105, endFreq:360+i*115, dur:.055, type:i%2?"sine":"triangle", gain:.028, delay:i*.026, attack:.003, hold:.004, release:.046});
+            }
+            noiseBurst({dur:.10, gain:.022, delay:.20, type:"highpass", freq:2600, q:.7});
+            break;
+
+          case "hint":
+            // Magical hint ping.
+            chord([740, 1110, 1480], 0, .16, .028, "sine");
+            sparkle(.075, 980, .85);
+            break;
+
+          case "clear":
+            // Level clear jingle.
+            tone({freq:110, endFreq:68, dur:.12, type:"sine", gain:.055, attack:.002, hold:.008, release:.105});
+            risingRun(.025, 430, 7, 1.1);
+            chord([860, 1080, 1290, 1720], .265, .28, .034, "triangle");
+            noiseBurst({dur:.22, gain:.032, delay:.24, type:"highpass", freq:1800, endFreq:5200, q:.7});
+            break;
+
+          case "start":
+            // Start-game logo sting.
+            tone({freq:96, endFreq:54, dur:.14, type:"sine", gain:.055, attack:.003, hold:.010, release:.115});
+            tone({freq:360, endFreq:450, dur:.085, type:"triangle", gain:.052, delay:.020, attack:.003, hold:.010, release:.070});
+            tone({freq:720, endFreq:900, dur:.105, type:"triangle", gain:.050, delay:.085, attack:.004, hold:.012, release:.088});
+            chord([1080, 1440, 1800], .165, .18, .027, "sine");
+            noiseBurst({dur:.12, gain:.020, delay:.14, type:"highpass", freq:2200, endFreq:6000, q:.6});
+            break;
+
+          case "tick":
+            // Urgency tick, sharper but short.
+            tone({freq:1120, endFreq:900, dur:.040, type:"square", gain:.028, attack:.001, hold:.003, release:.032, filter:{type:"highpass", freq:650, q:.4}});
+            noiseBurst({dur:.025, gain:.010, type:"highpass", freq:1800, q:.5});
+            break;
+
+          case "gameover":
+            // Descending “aw rip” chord.
+            noiseBurst({dur:.10, gain:.024, type:"bandpass", freq:420, q:1.0});
+            descendingRun(.015, 420, 5, 1.05);
+            tone({freq:82, endFreq:42, dur:.32, type:"sine", gain:.050, delay:.17, attack:.008, hold:.025, release:.285});
+            break;
+
+          case "reward":
+            // Rewarded ad claim: coins / win sparkle.
+            tone({freq:130, endFreq:75, dur:.09, type:"sine", gain:.050, attack:.002, hold:.006, release:.080});
+            risingRun(.025, 680, 6, 1.0);
+            sparkle(.180, 1220, 1.1);
+            chord([980, 1235, 1470], .275, .20, .030, "triangle");
+            break;
+        }
+      }
+
+      function sfx(name){
+        if(state.muted) return;
+        if(!audioCtx || audioCtx.state !== "running" || !audioUnlocked){
+          initAudio().then(ok => { if(ok) playSfx(name); });
+          return;
+        }
+        playSfx(name);
+      }
+
+      function bindAudioUnlockers(){
+        const unlock = () => {
+          if(!state.muted) initAudio();
+        };
+        window.addEventListener("pointerdown", unlock, { passive:true });
+        window.addEventListener("touchstart", unlock, { passive:true });
+        window.addEventListener("keydown", unlock, { passive:true });
+      }
+
+      startBtn.addEventListener("click", startGame);
+      installBtn.addEventListener("click", openStore);
+      topCtaBtn.addEventListener("click", openStore);
+      bannerCta.addEventListener("click", openStore);
+      hintBtn.addEventListener("click", showHint);
+      shuffleBtn.addEventListener("click", requestShuffle);
+      rewardBtn.addEventListener("click", requestTimeBoost);
+      muteBtn.addEventListener("click", () => {
+        state.muted = !state.muted;
+        muteBtn.textContent = state.muted ? "🔇 声音关" : "🔊 声音开";
+        if(!state.muted){ initAudio().then(() => sfx("tap")); toast("声音已开启 🔊"); }
+        else toast("声音已关闭");
+      });
+
+      document.addEventListener("visibilitychange", () => {
+        if(!audioCtx) return;
+        if(document.hidden) audioCtx.suspend();
+        else if(!state.muted) audioCtx.resume();
+      });
+
+      window.addEventListener("resize", resizeCanvas);
+      bindAudioUnlockers();
+      resizeCanvas();
+      createTiles();
+      updateHud();
+    })();
+  </script>
+</body>
+</html>
